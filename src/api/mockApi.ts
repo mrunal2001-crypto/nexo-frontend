@@ -4,6 +4,8 @@ export type ApiType   = 'UPI' | 'GSTN' | 'BANK'
 export type BankMode  = 'NEFT' | 'IMPS' | 'RTGS'
 
 export interface Transaction {
+  utr: any
+  transferMode: any
   id: string
   traceId: string
   type: ApiType
@@ -77,16 +79,20 @@ function delay(ms: number) { return new Promise(r => setTimeout(r, ms)) }
 
 // ── In-memory database ─────────────────────────────
 const INITIAL_TRANSACTIONS: Transaction[] = [
-  { id: uuid(), traceId: 'a7f3c1-upi', type: 'UPI', status: 'SUCCESS', amount: 12500, recipientName: 'Raj Electricals', recipientId: 'rajelectricals@hdfc', reference: 'UPI409094102314', description: 'Vendor payment - electrical supplies', durationMs: 487, createdAt: pastTime(2), payerVpa: 'nexo.business@axis', payeeVpa: 'rajelectricals@hdfc' },
-  { id: uuid(), traceId: 'b8e2d4-gst', type: 'GSTN', status: 'SUCCESS', amount: 84000, recipientName: 'Acme Pvt Ltd', recipientId: '27AAPFU0939F1ZV', reference: 'IRN20240409089', description: 'B2B invoice - consulting services Q1', durationMs: 712, createdAt: pastTime(8), gstin: '27AAPFU0939F1ZV', invoiceNo: 'INV-2024-089', invoiceType: 'B2B', irnNumber: 'IRN20240409089', itcEligible: true },
-  { id: uuid(), traceId: 'c9f1e5-bank', type: 'BANK', status: 'SUCCESS', amount: 55000, recipientName: 'Priya Sharma', recipientId: '****4821', reference: 'NEFT409094102001', description: 'Monthly salary - March 2024', durationMs: 934, createdAt: pastTime(12), bankMode: 'NEFT', ifsc: 'SBIN0007894', accountNumber: '****4821' },
-  { id: uuid(), traceId: 'd0g2f6-upi', type: 'UPI', status: 'PENDING', amount: 8000, recipientName: 'Amit Design Studio', recipientId: 'amitdesign@okicici', reference: 'UPI409094118001', description: 'Freelancer payment - logo design', durationMs: 312, createdAt: pastTime(18), payerVpa: 'nexo.business@axis', payeeVpa: 'amitdesign@okicici' },
-  { id: uuid(), traceId: 'e1h3g7-bank', type: 'BANK', status: 'FAILED', amount: 31200, recipientName: 'Sharma Traders', recipientId: '****9012', reference: '', description: 'Vendor payment - raw materials', durationMs: 203, createdAt: pastTime(25), bankMode: 'IMPS', ifsc: 'HDFC0001234', accountNumber: '****9012', errorCode: 'BANK_IFSC_STALE', errorMessage: 'IFSC HDFC0001234 belongs to merged branch' },
-  { id: uuid(), traceId: 'f2i4h8-gst', type: 'GSTN', status: 'FAILED', amount: 120000, recipientName: 'Beta Corp', recipientId: '06BZAHM9999P6Z2', reference: '', description: 'B2B invoice - software license', durationMs: 601, createdAt: pastTime(35), gstin: '06BZAHM9999P6Z2', invoiceNo: 'INV-2024-085', invoiceType: 'B2B', itcEligible: false, errorCode: 'GSTN_MISMATCH', errorMessage: 'GSTIN not found in GSTR-2B for period Mar-24' },
-  { id: uuid(), traceId: 'g3j5i9-upi', type: 'UPI', status: 'SUCCESS', amount: 3200, recipientName: 'Kumar Stores', recipientId: 'kumarstores@paytm', reference: 'UPI409094108002', description: 'Office supplies purchase', durationMs: 389, createdAt: pastTime(42), payerVpa: 'nexo.business@axis', payeeVpa: 'kumarstores@paytm' },
-  { id: uuid(), traceId: 'h4k6j0-bank', type: 'BANK', status: 'SUCCESS', amount: 72000, recipientName: 'Rahul Mehta', recipientId: '****9203', reference: 'NEFT409094102002', description: 'Monthly salary - March 2024', durationMs: 841, createdAt: pastTime(55), bankMode: 'NEFT', ifsc: 'UTIB0001234', accountNumber: '****9203' },
-  { id: uuid(), traceId: 'i5l7k1-gst', type: 'GSTN', status: 'SUCCESS', amount: 210000, recipientName: 'Zeta Traders', recipientId: '06BZAHM6385P6Z2', reference: 'IRN20240409081', description: 'B2B invoice - machinery parts', durationMs: 577, createdAt: pastTime(68), gstin: '06BZAHM6385P6Z2', invoiceNo: 'INV-2024-081', invoiceType: 'B2B', irnNumber: 'IRN20240409081', itcEligible: true },
-  { id: uuid(), traceId: 'j6m8l2-upi', type: 'UPI', status: 'SUCCESS', amount: 25000, recipientName: 'Tech Solutions', recipientId: 'techsol@ybl', reference: 'UPI409094102003', description: 'IT support - monthly retainer', durationMs: 421, createdAt: pastTime(90), payerVpa: 'nexo.business@axis', payeeVpa: 'techsol@ybl' },
+  {
+    id: uuid(), traceId: 'a7f3c1-upi', type: 'UPI', status: 'SUCCESS', amount: 12500, recipientName: 'Raj Electricals', recipientId: 'rajelectricals@hdfc', reference: 'UPI409094102314', description: 'Vendor payment - electrical supplies', durationMs: 487, createdAt: pastTime(2), payerVpa: 'nexo.business@axis', payeeVpa: 'rajelectricals@hdfc',
+    utr: undefined,
+    transferMode: undefined
+  },
+  { id: uuid(), traceId: 'b8e2d4-gst', type: 'GSTN', status: 'SUCCESS', amount: 84000, recipientName: 'Acme Pvt Ltd', recipientId: '27AAPFU0939F1ZV', reference: 'IRN20240409089', description: 'B2B invoice - consulting services Q1', durationMs: 712, createdAt: pastTime(8), gstin: '27AAPFU0939F1ZV', invoiceNo: 'INV-2024-089', invoiceType: 'B2B', irnNumber: 'IRN20240409089', itcEligible: true, utr: undefined, transferMode: undefined },
+  { id: uuid(), traceId: 'c9f1e5-bank', type: 'BANK', status: 'SUCCESS', amount: 55000, recipientName: 'Priya Sharma', recipientId: '****4821', reference: 'NEFT409094102001', description: 'Monthly salary - March 2024', durationMs: 934, createdAt: pastTime(12), bankMode: 'NEFT', ifsc: 'SBIN0007894', accountNumber: '****4821', utr: undefined, transferMode: undefined },
+  { id: uuid(), traceId: 'd0g2f6-upi', type: 'UPI', status: 'PENDING', amount: 8000, recipientName: 'Amit Design Studio', recipientId: 'amitdesign@okicici', reference: 'UPI409094118001', description: 'Freelancer payment - logo design', durationMs: 312, createdAt: pastTime(18), payerVpa: 'nexo.business@axis', payeeVpa: 'amitdesign@okicici', utr: undefined, transferMode: undefined },
+  { id: uuid(), traceId: 'e1h3g7-bank', type: 'BANK', status: 'FAILED', amount: 31200, recipientName: 'Sharma Traders', recipientId: '****9012', reference: '', description: 'Vendor payment - raw materials', durationMs: 203, createdAt: pastTime(25), bankMode: 'IMPS', ifsc: 'HDFC0001234', accountNumber: '****9012', errorCode: 'BANK_IFSC_STALE', errorMessage: 'IFSC HDFC0001234 belongs to merged branch', utr: undefined, transferMode: undefined },
+  { id: uuid(), traceId: 'f2i4h8-gst', type: 'GSTN', status: 'FAILED', amount: 120000, recipientName: 'Beta Corp', recipientId: '06BZAHM9999P6Z2', reference: '', description: 'B2B invoice - software license', durationMs: 601, createdAt: pastTime(35), gstin: '06BZAHM9999P6Z2', invoiceNo: 'INV-2024-085', invoiceType: 'B2B', itcEligible: false, errorCode: 'GSTN_MISMATCH', errorMessage: 'GSTIN not found in GSTR-2B for period Mar-24', utr: undefined, transferMode: undefined },
+  { id: uuid(), traceId: 'g3j5i9-upi', type: 'UPI', status: 'SUCCESS', amount: 3200, recipientName: 'Kumar Stores', recipientId: 'kumarstores@paytm', reference: 'UPI409094108002', description: 'Office supplies purchase', durationMs: 389, createdAt: pastTime(42), payerVpa: 'nexo.business@axis', payeeVpa: 'kumarstores@paytm', utr: undefined, transferMode: undefined },
+  { id: uuid(), traceId: 'h4k6j0-bank', type: 'BANK', status: 'SUCCESS', amount: 72000, recipientName: 'Rahul Mehta', recipientId: '****9203', reference: 'NEFT409094102002', description: 'Monthly salary - March 2024', durationMs: 841, createdAt: pastTime(55), bankMode: 'NEFT', ifsc: 'UTIB0001234', accountNumber: '****9203', utr: undefined, transferMode: undefined },
+  { id: uuid(), traceId: 'i5l7k1-gst', type: 'GSTN', status: 'SUCCESS', amount: 210000, recipientName: 'Zeta Traders', recipientId: '06BZAHM6385P6Z2', reference: 'IRN20240409081', description: 'B2B invoice - machinery parts', durationMs: 577, createdAt: pastTime(68), gstin: '06BZAHM6385P6Z2', invoiceNo: 'INV-2024-081', invoiceType: 'B2B', irnNumber: 'IRN20240409081', itcEligible: true, utr: undefined, transferMode: undefined },
+  { id: uuid(), traceId: 'j6m8l2-upi', type: 'UPI', status: 'SUCCESS', amount: 25000, recipientName: 'Tech Solutions', recipientId: 'techsol@ybl', reference: 'UPI409094102003', description: 'IT support - monthly retainer', durationMs: 421, createdAt: pastTime(90), payerVpa: 'nexo.business@axis', payeeVpa: 'techsol@ybl', utr: undefined, transferMode: undefined },
 ]
 
 class Store {
@@ -150,48 +156,151 @@ const VALID_GSTINS      = ['27AAPFU0939F1ZV', '06BZAHM6385P6Z2', '29AAGCB5311D1Z
 const VALID_IFSC        = ['SBIN', 'HDFC', 'ICIC', 'UTIB', 'KKBK', 'PUNB', 'BARB', 'CNRB']
 const STALE_IFSC        = ['HDFC0001234', 'SBIN0001234']
 
-export type ApiResult = { success: boolean; transaction: Transaction; validationErrors?: Record<string, string> }
+export type ApiResult = {
+  mock: boolean; success: boolean; transaction: Transaction; validationErrors?: Record<string, string> 
+}
 
 export async function callUpiPayout(input: { payerVpa: string; payeeVpa: string; amount: number; recipientName: string; description: string }): Promise<ApiResult> {
   await delay(randMs(400, 900))
   const domain = input.payeeVpa.split('@')[1]
   if (!VALID_VPA_DOMAINS.includes(domain)) {
-    const t = store.add({ type: 'UPI', status: 'FAILED', amount: input.amount, recipientName: input.recipientName, recipientId: input.payeeVpa, payerVpa: input.payerVpa, payeeVpa: input.payeeVpa, reference: '', description: input.description || 'UPI payout', durationMs: randMs(100, 300), errorCode: 'UPI_VPA_INVALID', errorMessage: `VPA '${input.payeeVpa}' not registered on NPCI` })
-    return { success: false, transaction: t }
+    const t = store.add({ type: 'UPI', status: 'FAILED', amount: input.amount, recipientName: input.recipientName, recipientId: input.payeeVpa, payerVpa: input.payerVpa, payeeVpa: input.payeeVpa, reference: '', description: input.description || 'UPI payout', durationMs: randMs(100, 300), errorCode: 'UPI_VPA_INVALID', errorMessage: `VPA '${input.payeeVpa}' not registered on NPCI`, utr: undefined, transferMode: undefined })
+    return { mock: true, success: false, transaction: t }
   }
   if (Math.random() < 0.05) {
-    const t = store.add({ type: 'UPI', status: 'FAILED', amount: input.amount, recipientName: input.recipientName, recipientId: input.payeeVpa, payerVpa: input.payerVpa, payeeVpa: input.payeeVpa, reference: '', description: input.description || 'UPI payout', durationMs: randMs(100, 400), errorCode: 'UPI_BANK_DECLINE', errorMessage: 'Declined by issuing bank' })
-    return { success: false, transaction: t }
+    const t = store.add({ type: 'UPI', status: 'FAILED', amount: input.amount, recipientName: input.recipientName, recipientId: input.payeeVpa, payerVpa: input.payerVpa, payeeVpa: input.payeeVpa, reference: '', description: input.description || 'UPI payout', durationMs: randMs(100, 400), errorCode: 'UPI_BANK_DECLINE', errorMessage: 'Declined by issuing bank', utr: undefined, transferMode: undefined })
+    return { mock: true, success: false, transaction: t }
   }
-  const t = store.add({ type: 'UPI', status: 'SUCCESS', amount: input.amount, recipientName: input.recipientName, recipientId: input.payeeVpa, payerVpa: input.payerVpa, payeeVpa: input.payeeVpa, reference: 'UPI' + Date.now(), description: input.description || 'UPI payout', durationMs: randMs(300, 900) })
-  return { success: true, transaction: t }
+  const t = store.add({ type: 'UPI', status: 'SUCCESS', amount: input.amount, recipientName: input.recipientName, recipientId: input.payeeVpa, payerVpa: input.payerVpa, payeeVpa: input.payeeVpa, reference: 'UPI' + Date.now(), description: input.description || 'UPI payout', durationMs: randMs(300, 900), utr: undefined, transferMode: undefined })
+  return { mock: true, success: true, transaction: t }
 }
 
 export async function callGstnInvoice(input: { gstin: string; recipientName: string; invoiceNo: string; invoiceDate: string; supplyType: string; amount: number; eWayBillNo?: string }): Promise<ApiResult> {
   await delay(randMs(500, 1200))
   if (!VALID_GSTINS.includes(input.gstin)) {
-    const t = store.add({ type: 'GSTN', status: 'FAILED', amount: input.amount, recipientName: input.recipientName, recipientId: input.gstin, gstin: input.gstin, invoiceNo: input.invoiceNo, invoiceType: input.supplyType, itcEligible: false, reference: '', description: `Invoice ${input.invoiceNo}`, durationMs: randMs(300, 700), errorCode: 'GSTN_MISMATCH', errorMessage: `GSTIN ${input.gstin} not found in GSTR-2B` })
-    return { success: false, transaction: t }
+    const t = store.add({ type: 'GSTN', status: 'FAILED', amount: input.amount, recipientName: input.recipientName, recipientId: input.gstin, gstin: input.gstin, invoiceNo: input.invoiceNo, invoiceType: input.supplyType, itcEligible: false, reference: '', description: `Invoice ${input.invoiceNo}`, durationMs: randMs(300, 700), errorCode: 'GSTN_MISMATCH', errorMessage: `GSTIN ${input.gstin} not found in GSTR-2B`, utr: undefined, transferMode: undefined })
+    return { mock: true, success: false, transaction: t }
   }
   const irn = 'IRN' + Date.now() + Math.floor(Math.random() * 9999)
-  const t = store.add({ type: 'GSTN', status: 'SUCCESS', amount: input.amount, recipientName: input.recipientName, recipientId: input.gstin, gstin: input.gstin, invoiceNo: input.invoiceNo, invoiceType: input.supplyType, irnNumber: irn, itcEligible: input.supplyType === 'B2B', reference: irn, description: `Invoice ${input.invoiceNo}`, durationMs: randMs(500, 1200) })
-  return { success: true, transaction: t }
+  const t = store.add({ type: 'GSTN', status: 'SUCCESS', amount: input.amount, recipientName: input.recipientName, recipientId: input.gstin, gstin: input.gstin, invoiceNo: input.invoiceNo, invoiceType: input.supplyType, irnNumber: irn, itcEligible: input.supplyType === 'B2B', reference: irn, description: `Invoice ${input.invoiceNo}`, durationMs: randMs(500, 1200), utr: undefined, transferMode: undefined })
+  return { mock: true, success: true, transaction: t }
+}
+
+const RAZORPAY_KEY_ID = import.meta.env.VITE_RAZORPAY_KEY_ID
+const RAZORPAY_KEY_SECRET = import.meta.env.VITE_RAZORPAY_KEY_SECRET
+const RAZORPAY_ACCOUNT_NUMBER = import.meta.env.VITE_RAZORPAY_ACCOUNT_NUMBER || 'YOUR_RAZORPAY_ACCOUNT_NO'
+
+async function razorpayFetch(url: string, payload: Record<string, unknown>) {
+  if (!RAZORPAY_KEY_ID || !RAZORPAY_KEY_SECRET) {
+    throw new Error('Missing Razorpay credentials: VITE_RAZORPAY_KEY_ID and VITE_RAZORPAY_KEY_SECRET must be set')
+  }
+  const response = await fetch(url, {
+    method: 'POST',
+    headers: {
+      'Authorization': 'Basic ' + btoa(`${RAZORPAY_KEY_ID}:${RAZORPAY_KEY_SECRET}`),
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(payload)
+  })
+  const data = await response.json()
+  if (!response.ok) throw new Error(data.error?.description || data.error_description || JSON.stringify(data))
+  return data
 }
 
 export async function callBankTransfer(input: { accountNumber: string; ifsc: string; transferMode: BankMode; amount: number; recipientName: string; description: string }): Promise<ApiResult> {
-  await delay(randMs(600, 1500))
-  const prefix = input.ifsc.slice(0, 4)
-  if (!VALID_IFSC.includes(prefix)) {
-    const t = store.add({ type: 'BANK', status: 'FAILED', amount: input.amount, recipientName: input.recipientName, recipientId: '****' + input.accountNumber.slice(-4), bankMode: input.transferMode, ifsc: input.ifsc, accountNumber: '****' + input.accountNumber.slice(-4), reference: '', description: input.description || `${input.transferMode} transfer`, durationMs: randMs(100, 300), errorCode: 'BANK_IFSC_INVALID', errorMessage: `IFSC ${input.ifsc} not in RBI master list` })
-    return { success: false, transaction: t }
+  try {
+    // Step 1: Create contact via backend
+    const contactRes = await fetch('https://nexo-backend-5913.onrender.com/api/bank/contact', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: input.recipientName, type: 'vendor' })
+    })
+    const contactData = await contactRes.json()
+    if (!contactRes.ok || !contactData.contact?.id) {
+      throw new Error(contactData.error || 'Failed to create contact')
+    }
+    const contact = contactData.contact
+
+    // Step 2: Create fund account via backend
+    const fundAccountRes = await fetch('https://nexo-backend-5913.onrender.com/api/bank/fund-account', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        contact_id: contact.id,
+        recipientName: input.recipientName,
+        ifsc: input.ifsc,
+        accountNumber: input.accountNumber,
+      })
+    })
+    const fundAccountData = await fundAccountRes.json()
+    if (!fundAccountRes.ok || !fundAccountData.fundAccount?.id) {
+      throw new Error(fundAccountData.error || 'Failed to create fund account')
+    }
+    const fundAccount = fundAccountData.fundAccount
+
+    // Step 3: Create payout via backend
+    const payoutRes = await fetch('https://nexo-backend-5913.onrender.com/api/bank/payout', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        account_number: "50100634234032",
+        fund_account_id: fundAccount.id,
+        amount: input.amount * 100,
+        currency: 'INR',
+        mode: input.transferMode,
+        purpose: 'payout',
+        narration: input.description,
+        reference_id: `payout-${shortId()}`,
+        queue_if_low_balance: true
+      })
+    })
+    const payoutData = await payoutRes.json()
+    if (!payoutRes.ok || !payoutData.payout) {
+      throw new Error(payoutData.error || 'Failed to create payout')
+    }
+    const payout = payoutData.payout
+
+    const status = payout.status === 'processed' ? 'SUCCESS' : payout.status === 'queued' || payout.status === 'created' ? 'PENDING' : 'FAILED'
+    const t = store.add({
+      type: 'BANK',
+      status: status as TxnStatus,
+      amount: input.amount,
+      recipientName: input.recipientName,
+      recipientId: '****' + input.accountNumber.slice(-4),
+      bankMode: input.transferMode,
+      ifsc: input.ifsc,
+      accountNumber: '****' + input.accountNumber.slice(-4),
+      reference: payout.id || '',
+      description: input.description || `${input.transferMode} transfer`,
+      durationMs: randMs(600, 1500),
+      errorCode: status === 'FAILED' ? payout.error?.code || 'RAZORPAY_PAYOUT_FAILED' : undefined,
+      errorMessage: status === 'FAILED' ? payout.error?.description || payout.error_description || JSON.stringify(payout) : undefined,
+      utr: undefined,
+      transferMode: input.transferMode
+    })
+
+    return { mock: true, success: status === 'SUCCESS', transaction: t }
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error)
+    const t = store.add({
+      type: 'BANK',
+      status: 'FAILED',
+      amount: input.amount,
+      recipientName: input.recipientName,
+      recipientId: '****' + input.accountNumber.slice(-4),
+      bankMode: input.transferMode,
+      ifsc: input.ifsc,
+      accountNumber: '****' + input.accountNumber.slice(-4),
+      reference: '',
+      description: input.description || `${input.transferMode} transfer`,
+      durationMs: randMs(100, 300),
+      errorCode: 'RAZORPAY_API_ERROR',
+      errorMessage: message,
+      utr: undefined,
+      transferMode: input.transferMode
+    })
+    return { mock: true, success: false, transaction: t }
   }
-  if (STALE_IFSC.includes(input.ifsc)) {
-    const t = store.add({ type: 'BANK', status: 'FAILED', amount: input.amount, recipientName: input.recipientName, recipientId: '****' + input.accountNumber.slice(-4), bankMode: input.transferMode, ifsc: input.ifsc, accountNumber: '****' + input.accountNumber.slice(-4), reference: '', description: input.description || `${input.transferMode} transfer`, durationMs: randMs(100, 300), errorCode: 'BANK_IFSC_STALE', errorMessage: `IFSC ${input.ifsc} belongs to merged branch` })
-    return { success: false, transaction: t }
-  }
-  const utr = input.transferMode + Date.now()
-  const t = store.add({ type: 'BANK', status: 'SUCCESS', amount: input.amount, recipientName: input.recipientName, recipientId: '****' + input.accountNumber.slice(-4), bankMode: input.transferMode, ifsc: input.ifsc, accountNumber: '****' + input.accountNumber.slice(-4), reference: utr, description: input.description || `${input.transferMode} transfer`, durationMs: randMs(600, 1500) })
-  return { success: true, transaction: t }
 }
 
 // ── Formatters ────────────────────────────────────

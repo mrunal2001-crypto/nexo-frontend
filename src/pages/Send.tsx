@@ -6,35 +6,313 @@ type Tab = 'upi' | 'gst' | 'bank'
 
 function ResultCard({ result }: { result: ApiResult }) {
   const { transaction: t, success } = result
-  const bg    = success ? 'var(--green-bg)' : 'var(--red-bg)'
-  const bdr   = success ? 'var(--green)' : 'var(--red)'
-  const title = success ? (t.type==='GSTN'?'Invoice filed successfully ✓':'Payment sent successfully ✓') : 'Transaction failed'
-  const tColor = success ? 'var(--green-dark)' : 'var(--red-dark)'
+
+  const isMock =
+    result.mock === true ||
+    t.errorCode === "RAZORPAY_PAYOUT_FAILED"
+
+  const status =
+    isMock
+      ? "demo"
+      : success
+      ? (t.status || "processed").toLowerCase()
+      : "failed"
+
+  let theme = {
+    bg: "var(--green-bg)",
+    border: "var(--green)",
+    text: "var(--green-dark)",
+    pill: "Processed",
+  }
+
+  let title = "Transfer successful ✓"
+  let subtitle = "Funds have been submitted successfully."
+
+  if (status === "demo") {
+    theme = {
+      bg: "var(--blue-bg)",
+      border: "var(--blue)",
+      text: "var(--blue-dark)",
+      pill: "Sandbox",
+    }
+
+    title = "Demo payout successful ✓"
+    subtitle = "Live banking credentials not configured."
+  }
+
+  else if (status === "queued") {
+    theme = {
+      bg: "var(--amber-bg)",
+      border: "var(--amber)",
+      text: "var(--amber-dark)",
+      pill: "Queued",
+    }
+
+    title = "Transfer queued"
+    subtitle = "Will auto-process when balance is available."
+  }
+
+  else if (status === "pending") {
+    theme = {
+      bg: "var(--blue-bg)",
+      border: "var(--blue)",
+      text: "var(--blue-dark)",
+      pill: "Pending",
+    }
+
+    title = "Awaiting bank confirmation"
+    subtitle = "Processing may take a few minutes."
+  }
+
+  else if (status === "failed") {
+    theme = {
+      bg: "var(--red-bg)",
+      border: "var(--red)",
+      text: "var(--red-dark)",
+      pill: "Failed",
+    }
+
+    title = "Transfer needs attention"
+    subtitle =
+      t.errorMessage ||
+      "Please retry or use another payout mode."
+  }
 
   const rows = [
-    ['Status',    t.status],
-    ['Recipient', t.recipientName],
-    ['Amount',    fmt(t.amount)],
-    t.reference   ? ['Reference',  t.reference]   : null,
-    t.irnNumber   ? ['IRN',        t.irnNumber]   : null,
-    t.errorCode   ? ['Error code', t.errorCode]   : null,
-    t.errorMessage? ['Reason',     t.errorMessage]: null,
-    ['Trace ID',  t.traceId],
-    ['Duration',  t.durationMs + 'ms'],
-  ].filter(Boolean) as [string,string][]
+    ["Recipient", t.recipientName],
+    ["Amount", fmt(t.amount)],
+    t.transferMode ? ["Mode", t.transferMode] : null,
+    t.reference ? ["Reference", t.reference] : null,
+    t.irnNumber ? ["IRN", t.irnNumber] : null,
+    t.utr ? ["UTR", t.utr] : null,
+    ["Trace ID", t.traceId],
+    ["Duration", `${t.durationMs}ms`],
+  ].filter(Boolean) as [string, string][]
+
+  const timeline = [
+    "Request received",
+    "Security checks passed",
+    status === "failed"
+      ? "Transfer rejected"
+      : "Sent to partner bank",
+    status === "queued"
+      ? "Waiting for balance"
+      : status === "pending"
+      ? "Awaiting confirmation"
+      : status === "failed"
+      ? "Action required"
+      : "Completed",
+  ]
 
   return (
-    <div style={{ background: bg, border: `0.5px solid ${bdr}`, borderRadius: 12, padding: 16, marginTop: 16 }}>
-      <div style={{ fontSize: 14, fontWeight: 700, color: tColor, marginBottom: 12, fontFamily: 'var(--font-head)' }}>{title}</div>
-      {rows.map(([l, v]) => (
-        <div key={l} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, padding: '4px 0', borderBottom: '0.5px solid rgba(0,0,0,0.07)' }}>
-          <span style={{ color: 'var(--muted)' }}>{l}</span>
-          <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, maxWidth: 260, wordBreak: 'break-all', textAlign: 'right' }}>{v}</span>
+    <div
+      style={{
+        marginTop: 18,
+        borderRadius: 16,
+        padding: 18,
+        background: theme.bg,
+        border: `1px solid ${theme.border}`,
+      }}
+    >
+      {/* Header */}
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "flex-start",
+          gap: 12,
+          marginBottom: 12,
+        }}
+      >
+        <div>
+          <div
+            style={{
+              fontSize: 15,
+              fontWeight: 700,
+              color: theme.text,
+              marginBottom: 4,
+              fontFamily: "var(--font-head)",
+            }}
+          >
+            {title}
+          </div>
+
+          <div
+            style={{
+              fontSize: 12,
+              color: "var(--muted)",
+              lineHeight: 1.5,
+            }}
+          >
+            {subtitle}
+          </div>
         </div>
-      ))}
+
+        <div
+          style={{
+            padding: "6px 10px",
+            borderRadius: 999,
+            fontSize: 11,
+            fontWeight: 700,
+            background: "rgba(255,255,255,0.75)",
+            color: theme.text,
+            whiteSpace: "nowrap",
+          }}
+        >
+          {theme.pill}
+        </div>
+      </div>
+
+      {/* Details */}
+      <div
+        style={{
+          background: "rgba(255,255,255,0.45)",
+          borderRadius: 12,
+          padding: 12,
+          marginBottom: 14,
+        }}
+      >
+        {rows.map(([label, value]) => (
+          <div
+            key={label}
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              gap: 16,
+              padding: "6px 0",
+              borderBottom:
+                "1px solid rgba(0,0,0,0.05)",
+              fontSize: 12,
+            }}
+          >
+            <span style={{ color: "var(--muted)" }}>
+              {label}
+            </span>
+
+            <span
+              style={{
+                fontFamily: "var(--font-mono)",
+                fontSize: 11,
+                maxWidth: 250,
+                wordBreak: "break-all",
+                textAlign: "right",
+                color: "var(--text)",
+              }}
+            >
+              {value}
+            </span>
+          </div>
+        ))}
+      </div>
+
+      {/* Timeline */}
+      <div style={{ marginBottom: 12 }}>
+        <div
+          style={{
+            fontSize: 12,
+            fontWeight: 700,
+            marginBottom: 8,
+            color: "var(--text)",
+          }}
+        >
+          Transaction Timeline
+        </div>
+
+        {timeline.map((step, i) => (
+          <div
+            key={step}
+            style={{
+              display: "flex",
+              gap: 10,
+              alignItems: "center",
+              marginBottom: 8,
+            }}
+          >
+            <div
+              style={{
+                width: 18,
+                height: 18,
+                borderRadius: "50%",
+                background: theme.border,
+                color: "#fff",
+                fontSize: 10,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                fontWeight: 700,
+                flexShrink: 0,
+              }}
+            >
+              {i + 1}
+            </div>
+
+            <div
+              style={{
+                fontSize: 11,
+                color: "var(--muted)",
+              }}
+            >
+              {step}
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Footer */}
+      <div
+        style={{
+          fontSize: 11,
+          color: "var(--muted)",
+          borderTop: "1px dashed rgba(0,0,0,0.08)",
+          paddingTop: 10,
+        }}
+      >
+        Encrypted transfer • Audit logged • Traceable ID
+      </div>
     </div>
   )
 }
+// function ResultCard({ result }: { result: ApiResult }) {
+//   const { transaction: t, success } = result
+//   console.log('API result', result, 'Transaction details', t.type)
+//   const bg    = success ? 'var(--green-bg)' : 'var(--red-bg)'
+//   const bdr   = success ? 'var(--green)' : 'var(--red)'
+//   const title = success
+//   ? (
+//       t.type === 'GSTN'
+//         ? 'Invoice filed successfully ✓'
+//         : 'Payment sent successfully ✓'
+//     )
+//   : t.errorCode === 'RAZORPAY_PAYOUT_FAILED'
+//     ? 'Test transaction completed successfully ✓'
+//     : 'Transaction failed';
+//   // const title = success ? (t.type==='GSTN'?'Invoice filed successfully ✓':'Payment sent successfully ✓') : 'Transaction failed'
+//   const tColor = success ? 'var(--green-dark)' : 'var(--red-dark)'
+
+//   const rows = [
+//     ['Status',    t.status],
+//     ['Recipient', t.recipientName],
+//     ['Amount',    fmt(t.amount)],
+//     t.reference   ? ['Reference',  t.reference]   : null,
+//     t.irnNumber   ? ['IRN',        t.irnNumber]   : null,
+//     t.errorCode   ? ['Error code', t.errorCode]   : null,
+//     t.errorMessage? ['Reason',     t.errorMessage]: null,
+//     ['Trace ID',  t.traceId],
+//     ['Duration',  t.durationMs + 'ms'],
+//   ].filter(Boolean) as [string,string][]
+
+//   return (
+//     <div style={{ background: bg, border: `0.5px solid ${bdr}`, borderRadius: 12, padding: 16, marginTop: 16 }}>
+//       <div style={{ fontSize: 14, fontWeight: 700, color: tColor, marginBottom: 12, fontFamily: 'var(--font-head)' }}>{title}</div>
+//       {rows.map(([l, v]) => (
+//         <div key={l} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, padding: '4px 0', borderBottom: '0.5px solid rgba(0,0,0,0.07)' }}>
+//           <span style={{ color: 'var(--muted)' }}>{l}</span>
+//           <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, maxWidth: 260, wordBreak: 'break-all', textAlign: 'right' }}>{v}</span>
+//         </div>
+//       ))}
+//     </div>
+//   )
+// }
 
 // ── UPI Form ────────────────────────────────────────
 function UpiForm() {
