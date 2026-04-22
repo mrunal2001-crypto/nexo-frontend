@@ -26,9 +26,9 @@ export default function Sidebar({ current, onNav }: { current: string; onNav: (i
           width: 32, height: 32, background: 'var(--blue)', borderRadius: 9,
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           color: '#fff', fontSize: 15, fontWeight: 800, fontFamily: 'var(--font-head)', flexShrink: 0,
-        }}>N</div>
+        }}>P</div>
         <div>
-          <div style={{ fontSize: 15, fontWeight: 700, fontFamily: 'var(--font-head)', letterSpacing: 0.5 }}>NEXO</div>
+          <div style={{ fontSize: 15, fontWeight: 700, fontFamily: 'var(--font-head)', letterSpacing: 0.5 }}>Payment Gateway</div>
           <div style={{ fontSize: 10, color: 'var(--hint)', marginTop: 1, letterSpacing: 0.3 }}>Finance hub</div>
         </div>
       </div>
